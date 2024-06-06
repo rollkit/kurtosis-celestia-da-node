@@ -1,3 +1,5 @@
+faucet = import_module("./lib/faucet/faucet.star")
+pyro = import_module("./lib/pyro/pyro.star")l
 
 def run(
     plan,
@@ -23,24 +25,31 @@ def run(
     p2p_mutual="",
     p2p_network="mocha",
     pprof=False,
-    pyroscope=False,
-    pyroscope_endpoint="http://localhost:4040",
-    pyroscope_tracing=False,
+    enable_pyroscope=True,
+    pyroscope_tracing=True,
     rpc_addr="0.0.0.0",
     rpc_port="26658",
     tracing=False,
     tracing_endpoint="localhost:4318",
     tracing_tls=True
     ):
+    pyroscope_endpoint = "http://localhost:4040" # set this as default endpoint
+    if pyroscope:
+        # TODO: configure pyro with DA node, grafana maybe?
+        pyro_service = pyro.launch(plan)
+        pyroscope_endpoint = "http://{0}:{1}".format(pyro_service.ip_address, pyro_service.ports["pyroscope"].number)
+        
     # create node store
     results = plan.run_sh(
-        run="whoami && celestia light init --p2p.network {0} --node.store=/home/celestia/.celestia-light-node-4".format(p2p_network),
+        run="whoami && celestia light init --p2p.network {0} --node.store=/home/celestia/.celestia-light-node-4 --pyroscope {1} --pyrscope.endpoint {2} --tracing {3}".format(p2p_network, enable_pyroscope, pyroscope_endpoint, tracing),
         image=da_image,
         store=[
             StoreSpec(name="keystore", src="/home/celestia/.celestia-light-node-4/keys/*"),
         ],
+        description="Generate keystore for DA node",
     )
-    plan.print(results.files_artifacts)
+    keystore_artifact = results.files_artifacts[0]
+    plan.print(results.output)
 
     # create node config based on provided args
     config_file_template = read_file("./configs/config.toml.tmpl")
@@ -63,39 +72,58 @@ def run(
     )
 
     plan.add_service(
-    name = "celestia-light",
-    config = ServiceConfig(
-        image=da_image,
-        ports = {
-            "rpc": PortSpec(
-                    number = 26658, 
-                    transport_protocol = "TCP",
-                    application_protocol = "http",
-            ),
-        },
-        # create public port so that 26658 is exposed on machine and available for peering
-        public_ports = {
-            "rpc": PortSpec(
-                    number = 26658, 
-                    transport_protocol = "TCP",
-                    application_protocol = "http",
-            ),
-        },
-        files={
-            "/home/celestia/.celestia-light-mocha-4/": da_node_config_file,
-            "/home/celestia/.celestia-light-mocha-4/keys": Directory(
-                artifact_names=[results.files_artifacts[0]],
-            ),
-            "/home/celestia/.celestia-light-mocha-4/data": Directory(
-                persistent_key="data-directory"
-            ),
-        },
-        entrypoint=[
-            "bash",
-            "-c",
-            "cat /home/celestia/.celestia-light-mocha-4/config.toml && celestia light start --p2p.network {0} --node.store=/home/celestia/.celestia-light-mocha-4".format(p2p_network),
-        ],
-        user = User(uid=0),
-    ),
-)
+        name = "celestia-light",
+        config = ServiceConfig(
+            image=da_image,
+            ports = {
+                "rpc": PortSpec(
+                        number = 26658, 
+                        transport_protocol = "TCP",
+                        application_protocol = "http",
+                ),
+            },
+            # create public port so that 26658 is exposed on machine and available for peering
+            public_ports = {
+                "rpc": PortSpec(
+                        number = 26658, 
+                        transport_protocol = "TCP",
+                        application_protocol = "http",
+                ),
+            },
+            files={
+                "/home/celestia/.celestia-light-mocha-4/": da_node_config_file,
+                "/home/celestia/.celestia-light-mocha-4/keys": Directory(
+                    artifact_names=[keystore_artifact],
+                ),
+                "/home/celestia/.celestia-light-mocha-4/data": Directory(
+                    persistent_key="data-directory"
+                ),
+            },
+            entrypoint=[
+                "bash",
+                "-c",
+                # "cat /home/celestia/.celestia-light-mocha-4/config.toml && celestia light start --core.ip {0} --p2p.network {1} --node.store=/home/celestia/.celestia-light-mocha-4 --rpc.skip-auth".format(p2p_network),
+                # "celestia light start --p2p.network {0} --node.store=/home/celestia/.celestia-light-mocha-4 --node.config=/home/celestia/.celestia-light-mocha-4 --rpc.skip-auth".format(p2p_network),
+                "cat /home/celestia/.celestia-light-mocha-4/config.toml && celestia light start --p2p.network {0} --node.config=/home/celestia/.celestia-light-mocha-4/config.toml --node.store=/home/celestia/.celestia-light-mocha-4 --rpc.skip-auth".format(p2p_network),
+            ],
+            user = User(uid=0),
+        ),
+    )
+
+    get_address_result = plan.exec(
+        service_name="celestia-light",
+        recipe=ExecRecipe(
+            command=["sh", "-c", "celestia state account-address --node.store=/home/celestia/.celestia-light-mocha-4 | jq .result"],
+        ),
+        acceptable_codes=[0],
+        description="Getting address of node",
+    )
+    address = get_address_result["output"]
+    plan.print(get_address_result["output"])
+
+    # launch faucet
+    faucet.launch(plan)
+    faucet.allocate_funds(plan, address)
+
+
 

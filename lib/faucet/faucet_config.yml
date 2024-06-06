@@ -1,0 +1,20 @@
+server:
+  allow_cors: false
+  http:
+    port: 8080
+  grpc:
+    port: 9092
+  limit:
+    enabled: true
+    period: 86400
+chains:
+  - name: "celestia"
+    key_name: "celestia"
+    chain_id: "mocha-4"
+    rpc_endpoint: "http://public-celestia-mocha4-consensus.numia.xyz:26657"
+    account_prefix: "celestia"
+    sender: "celestia19750lnu4q722cfah07rahz5gs2yt375unwkz5t"
+    key: "chapter always harsh wagon priority staff describe salt chaos during magnet atom vacuum immense twelve fetch screen adult harsh hamster load trust game remind"
+    gas_adjustment: 1.5
+    gas_price: "0.01utia"
+    drop_coin: "10000utia"
