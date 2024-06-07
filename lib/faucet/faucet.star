@@ -21,7 +21,11 @@ def launch(plan):
             files={
                 "/config": faucet_config,
             },
-            entrypoint=["sh", "-c", "/app/server --config-file /config/faucet_config.yml"],
+            entrypoint=[
+                "sh",
+                "-c",
+                "/app/server --config-file /config/faucet_config.yml",
+            ],
         ),
     )
 
@@ -31,7 +35,7 @@ def allocate_funds(plan, address=""):
     faucet = plan.get_service(name="faucet")
 
     # request_body = "{\"address\":\"{0}\",\"chainId\": \"mocha-4\"}".format(address)
-    request_body = "{\"address\":" + address + ",\"chainId\":\"mocha-4\"}"
+    request_body = '{"address":' + address + ',"chainId":"mocha-4"}'
     plan.print(request_body)
 
     result = plan.request(
@@ -40,9 +44,7 @@ def allocate_funds(plan, address=""):
             port_id="api",
             endpoint="/api/v1/faucet/give_me",
             body=request_body,
-            extract={
-                "txhash": ".txHash"
-            }
+            extract={"txhash": ".txHash"},
         ),
         acceptable_codes=[200],
     )
@@ -51,6 +53,3 @@ def allocate_funds(plan, address=""):
     # 200 - everything went well
 
     plan.print(result)
-    
-
-

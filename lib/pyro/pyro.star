@@ -1,4 +1,3 @@
-
 def launch(plan):
     return plan.add_service(
         name="pyroscope",
@@ -11,5 +10,5 @@ def launch(plan):
                     application_protocol="http",
                 )
             },
-        )
+        ),
     )
