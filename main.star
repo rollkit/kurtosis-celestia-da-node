@@ -34,14 +34,15 @@ def run(
     tracing_tls=True
     ):
     pyroscope_endpoint = "http://localhost:4040" # set this as default endpoint
-    if pyroscope:
+    if enable_pyroscope:
         # TODO: configure pyro with DA node, grafana maybe?
         pyro_service = pyro.launch(plan)
         pyroscope_endpoint = "http://{0}:{1}".format(pyro_service.ip_address, pyro_service.ports["pyroscope"].number)
         
     # create node store
     results = plan.run_sh(
-        run="whoami && celestia light init --p2p.network {0} --node.store=/home/celestia/.celestia-light-node-4 --pyroscope {1} --pyrscope.endpoint {2} --tracing {3}".format(p2p_network, enable_pyroscope, pyroscope_endpoint, tracing),
+        # run="whoami && celestia light init --p2p.network {0} --node.store=/home/celestia/.celestia-light-node-4 --pyroscope {1} --pyroscope.endpoint {2} --tracing {3}".format(p2p_network, enable_pyroscope, pyroscope_endpoint, tracing),
+        run="whoami && celestia light init --p2p.network {0} --node.store=/home/celestia/.celestia-light-node-4".format(p2p_network, enable_pyroscope, pyroscope_endpoint, tracing),
         image=da_image,
         store=[
             StoreSpec(name="keystore", src="/home/celestia/.celestia-light-node-4/keys/*"),
