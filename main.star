@@ -1,5 +1,5 @@
 faucet = import_module("./lib/faucet/faucet.star")
-pyro = import_module("./lib/pyro/pyro.star")l
+pyro = import_module("./lib/pyro/pyro.star")
 
 def run(
     plan,
