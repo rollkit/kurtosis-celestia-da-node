@@ -79,7 +79,7 @@ def run(
         },
     )
 
-    plan.add_service(
+    da_node = plan.add_service(
         name="celestia-light",
         config=ServiceConfig(
             image=da_image,
@@ -138,3 +138,5 @@ def run(
     # launch faucet
     faucet.launch(plan)
     faucet.allocate_funds(plan, address)
+
+    return "http://{0}:{1}".format(da_node.ip_address, da_node.ports["rpc"].number)
