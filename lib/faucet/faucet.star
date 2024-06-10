@@ -1,5 +1,5 @@
 def launch(plan):
-    # TODO: figure out how to run this faucet while hiding the master key, I could embed the address and master key into the docker image
+    # TODO: embed hardcoded faucet config into docker image to hide master key
     faucet_config = plan.upload_files(src="./faucet_config.yml", name="faucet-config")
 
     plan.add_service(
@@ -12,11 +12,6 @@ def launch(plan):
                     transport_protocol="TCP",
                     application_protocol="http",
                 ),
-                # "server": PortSpec(
-                #     number=8080,
-                #     transport_protocol="TCP",
-                #     application_protocol="http",
-                # )
             },
             files={
                 "/config": faucet_config,
