@@ -120,6 +120,7 @@ def run(
         ),
     )
 
+    # Get node values to return
     get_address_result = plan.exec(
         service_name="celestia-light",
         recipe=ExecRecipe(
@@ -133,10 +134,23 @@ def run(
         description="Getting address of node",
     )
     address = get_address_result["output"]
-    plan.print(get_address_result["output"])
+    
+    get_auth_token_result = plan.exec(
+        service_name="celestia-light",
+        recipe=ExecRecipe(
+            command=[
+                "sh",
+                "-c",
+                "celestia light auth write --p2p.network {0}".format(p2p_network),
+            ],
+        ),
+        acceptable_codes=[0],
+        description="Getting auth token of node",
+    )
+    auth_token = get_auth_token_result["output"]
 
     # launch faucet
     faucet.launch(plan)
     faucet.allocate_funds(plan, address)
 
-    return "http://{0}:{1}".format(da_node.ip_address, da_node.ports["rpc"].number)
+    return "http://{0}:{1}".format(da_node.ip_address, da_node.ports["rpc"].number), auth_token
