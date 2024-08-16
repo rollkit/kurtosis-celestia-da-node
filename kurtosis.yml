@@ -1,5 +1,5 @@
-name: "github.com/tedim52/celestia-da-node-package"
+name: "github.com/MSevey/celestia-da-node-package"
 description: |-
   Celestia DA Node Package
   ========
-  This package spins up a DA node for access to a local DA layer!
+  This package spins up a DA node for access to the Celestia DA layer!
