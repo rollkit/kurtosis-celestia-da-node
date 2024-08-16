@@ -4,7 +4,7 @@ pyro = import_module("./lib/pyro/pyro.star")
 
 def run(
     plan,
-    da_image="ghcr.io/celestiaorg/celestia-node:v0.13.6",
+    da_image="ghcr.io/celestiaorg/celestia-node:v0.15.0",
     core_grpc_port="9090",
     core_ip="full.consensus.mocha-4.celestia-mocha.com",
     core_rpc_port="26657",
