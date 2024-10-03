@@ -94,12 +94,10 @@ def run(
     #     },
     # )
 
-    ## Current State: init command is working. kurtosis run fails because there isn't a celestia start command yet
-    #
-    #
-    ## TODO: figure out how to translate the rest of the docke run command
+    # Add celestia da node from docker image
+    da_node_service_name = "celestia-{0}-{1}".format(node_type, p2p_network)
     da_node = plan.add_service(
-        name="celestia-{0}-{1}".format(node_type, p2p_network),
+        name=da_node_service_name,
         config=ServiceConfig(
             image=da_image,
             ports={
@@ -168,26 +166,27 @@ def run(
     # )
     # address = get_address_result["output"]
 
-    # get_auth_token_result = plan.exec(
-    #     service_name="celestia-light",
-    #     recipe=ExecRecipe(
-    #         command=[
-    #             "sh",
-    #             "-c",
-    #             "celestia light auth write --p2p.network {0}".format(p2p_network),
-    #         ],
-    #     ),
-    #     acceptable_codes=[0],
-    #     description="Getting auth token of node",
-    # )
-    # auth_token = get_auth_token_result["output"]
+    get_auth_token_result = plan.exec(
+        service_name=da_node_service_name,
+        recipe=ExecRecipe(
+            command=[
+                "sh",
+                "-c",
+                "celestia {0} auth write --p2p.network {1}".format(
+                    node_type, p2p_network
+                ),
+            ],
+        ),
+        acceptable_codes=[0],
+        description="Getting auth token of node",
+    )
+    auth_token = get_auth_token_result["output"]
 
     # # launch faucet
     # faucet.launch(plan)
     # faucet.allocate_funds(plan, address)
 
-    return "http://{0}:{1}".format(da_node.ip_address, da_node.ports["rpc"].number)
-    # return (
-    #     "http://{0}:{1}".format(da_node.ip_address, da_node.ports["rpc"].number),
-    #     auth_token,
-    # )
+    return (
+        "http://{0}:{1}".format(da_node.ip_address, da_node.ports["rpc"].number),
+        auth_token,
+    )
