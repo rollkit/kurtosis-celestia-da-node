@@ -15,6 +15,7 @@ DEFAULT_CONFIG = {
     },
 }
 
+
 # NOTE:
 # - Commneted out inputs are arguments for the node that could be added later as needed
 # - This is a simple implementation for use with testnets. Additional features and testing might be required to use on mainnet.
@@ -140,20 +141,20 @@ def run(
         ),
     )
 
-    # # Get node values to return
-    # get_address_result = plan.exec(
-    #     service_name="celestia-light",
-    #     recipe=ExecRecipe(
-    #         command=[
-    #             "sh",
-    #             "-c",
-    #             "celestia state account-address --node.store=/home/celestia/.celestia-light-mocha-4 | jq .result",
-    #         ],
-    #     ),
-    #     acceptable_codes=[0],
-    #     description="Getting address of node",
-    # )
-    # address = get_address_result["output"]
+    # Get node values to return
+    get_address_result = plan.exec(
+        service_name=da_node_service_name,
+        recipe=ExecRecipe(
+            command=[
+                "sh",
+                "-c",
+                "celestia state account-address | jq .result",
+            ],
+        ),
+        acceptable_codes=[0],
+        description="Getting address of node",
+    )
+    address = get_address_result["output"]
 
     get_auth_token_result = plan.exec(
         service_name=da_node_service_name,
@@ -171,11 +172,8 @@ def run(
     )
     auth_token = get_auth_token_result["output"]
 
-    # # launch faucet
-    # faucet.launch(plan)
-    # faucet.allocate_funds(plan, address)
-
     return (
         "http://{0}:{1}".format(da_node.ip_address, da_node.ports["rpc"].number),
         auth_token,
+        address,
     )
