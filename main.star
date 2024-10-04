@@ -58,6 +58,10 @@ def run(
         ),
     )
 
+    # General notes on the following steps:
+    # - jq -r requests the raw output from jq, without quotes
+    # - tr -d '\n' removes the newline character from the output
+
     # Get the node's address
     get_address_result = plan.exec(
         service_name=da_node_service_name,
@@ -65,7 +69,7 @@ def run(
             command=[
                 "sh",
                 "-c",
-                "celestia state account-address | jq .result",
+                "celestia state account-address | jq -r .result | tr -d '\n'",
             ],
         ),
         acceptable_codes=[0],
@@ -80,7 +84,7 @@ def run(
             command=[
                 "sh",
                 "-c",
-                "celestia {0} auth write --p2p.network {1}".format(
+                "celestia {0} auth write --p2p.network {1} | tr -d '\n'".format(
                     node_type, p2p_network
                 ),
             ],
@@ -97,7 +101,7 @@ def run(
             command=[
                 "sh",
                 "-c",
-                "celestia header network-head | jq .result.header.height",
+                "celestia header network-head | jq -r .result.header.height | tr -d '\n'",
             ],
         ),
         acceptable_codes=[0],
