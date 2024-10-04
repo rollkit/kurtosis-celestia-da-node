@@ -1,27 +1,29 @@
 faucet = import_module("./lib/faucet/faucet.star")
 pyro = import_module("./lib/pyro/pyro.star")
 
+NETWORK = "arabica"
+
 DEFAULT_CONFIG = {
     "arabica": {
-        "network": "arabica",
         # "da_image": "ghcr.io/celestiaorg/celestia-node:v0.18.1-arabica",
         "da_image": "celestia-node:v0.18.1-arabica-fix",  # custom image until PR is merged
         "core_ip": "validator-1.celestia-arabica-11.com",
     },
     "mocha": {
-        "network": "mocha",
         "da_image": "ghcr.io/celestiaorg/celestia-node:v0.18.1-mocha",
         "core_ip": "full.consensus.mocha-4.celestia-mocha.com",
     },
 }
 
-
+# NOTE:
+# - Commneted out inputs are arguments for the node that could be added later as needed
+# - This is a simple implementation for use with testnets. Additional features and testing might be required to use on mainnet.
 def run(
     plan,
     node_type="light",
-    da_image=DEFAULT_CONFIG["arabica"]["da_image"],
+    da_image=DEFAULT_CONFIG[NETWORK]["da_image"],
     # core_grpc_port="9090",
-    core_ip=DEFAULT_CONFIG["arabica"]["core_ip"],
+    core_ip=DEFAULT_CONFIG[NETWORK]["core_ip"],
     # core_rpc_port="26657",
     # gateway=False,
     # gateway_addr="0.0.0.0",
@@ -39,7 +41,7 @@ def run(
     # node_config="",
     # p2p_metrics=False,
     # p2p_mutual="",
-    p2p_network=DEFAULT_CONFIG["arabica"]["network"],
+    p2p_network=NETWORK,
     # pprof=False,
     # enable_pyroscope=True,
     # pyroscope_tracing=True,
@@ -74,25 +76,7 @@ def run(
     # keystore_artifact = results.files_artifacts[0]
     # plan.print(results.output)
 
-    # # create node config based on provided args
-    # config_file_template = read_file("./configs/config.toml.tmpl")
-    # da_node_config_file = plan.render_templates(
-    #     name="light-node-configuration",
-    #     config={
-    #         "config.toml": struct(
-    #             template=config_file_template,
-    #             data={
-    #                 "CORE_IP": core_ip,
-    #                 "CORE_RPC_PORT": core_rpc_port,
-    #                 "CORE_GRPC_PORT": core_grpc_port,
-    #                 "RPC_ADDRESS": rpc_addr,
-    #                 "RPC_PORT": rpc_port,
-    #                 "TRUSTED_HASH": headers_trusted_hash,
-    #                 "SAMPLE_FROM": daser_sample_from,
-    #             },
-    #         ),
-    #     },
-    # )
+    # node_store = "/Users/matt/Code/MSevey/celestia-da-node-package/node_store"
 
     # Add celestia da node from docker image
     da_node_service_name = "celestia-{0}-{1}".format(node_type, p2p_network)
@@ -107,7 +91,6 @@ def run(
                     application_protocol="http",
                 ),
             },
-            # create public port so that 26658 is exposed on machine and available for peering
             public_ports={
                 "rpc": PortSpec(
                     number=26658,
@@ -118,7 +101,6 @@ def run(
             env_vars={
                 "NODE_TYPE": node_type,
                 "P2P_NETWORK": p2p_network,
-                # "HOME": "/home/celestia", # this is set from the dockerfile
             },
             cmd=[
                 "celestia",
@@ -129,6 +111,13 @@ def run(
                 "--p2p.network",
                 p2p_network,
             ],
+            # files={
+            #     #     # "/home/celestia/config.toml": "config.toml",
+            #     "/Users/matt/Code/MSevey/celestia-da-node-package": Directory(
+            #         persistent_key="keys-directory"
+            #     ),
+            #     #     "/home/celestia/data": Directory(persistent_key="data-directory"),
+            # }
             # files={
             #     "/home/celestia/.celestia-light-mocha-4/": da_node_config_file,
             #     "/home/celestia/.celestia-light-mocha-4/keys": Directory(
