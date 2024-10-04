@@ -1,12 +1,8 @@
-faucet = import_module("./lib/faucet/faucet.star")
-pyro = import_module("./lib/pyro/pyro.star")
-
 NETWORK = "arabica"
-
 DEFAULT_CONFIG = {
     "arabica": {
         # "da_image": "ghcr.io/celestiaorg/celestia-node:v0.18.1-arabica",
-        "da_image": "celestia-node:v0.18.1-arabica-fix",  # custom image until PR is merged
+        "da_image": "celestia-node:v0.18.1-arabica-fix",  # custom local image until PR is merged
         "core_ip": "validator-1.celestia-arabica-11.com",
     },
     "mocha": {
@@ -94,8 +90,23 @@ def run(
     )
     auth_token = get_auth_token_result["output"]
 
+    # Get the node's current network height
+    get_height_result = plan.exec(
+        service_name=da_node_service_name,
+        recipe=ExecRecipe(
+            command=[
+                "sh",
+                "-c",
+                "celestia header network-head | jq .result.header.height",
+            ],
+        ),
+        acceptable_codes=[0],
+        description="Getting network head height of node",
+    )
+    height = get_height_result["output"]
     return (
         "http://{0}:{1}".format(da_node.ip_address, da_node.ports["rpc"].number),
         auth_token,
         address,
+        height,
     )
