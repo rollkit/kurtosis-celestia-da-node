@@ -19,8 +19,26 @@ def run(
     core_ip=DEFAULT_CONFIG[NETWORK]["core_ip"],
     p2p_network=NETWORK,
 ):
+    # Step 0: make sure there's a relative path in the package for 'data' even if its empty at first
+    # Step 1: Pull data into an artifact
+    init_data = plan.upload_files(src="./persisted-data", name="init-data")
+
+    # da_node_service_name = "celestia-{0}-{1}".format(node_type, p2p_network)
+    da_node_service_name = "node"
+
+    # Define filepath for artifact based on node name
+    node_store = "/home/celestia/{0}".format(da_node_service_name)
+
+    # TODO: either set node store or set filepath to default
+
+    # # create node store
+    # plan.run_sh(
+    #     run="mkdir -p {0}".format(node_store),
+    #     image=da_image,
+    #     description="Generate node store for DA node",
+    # )
+
     # Add celestia da node from docker image
-    da_node_service_name = "celestia-{0}-{1}".format(node_type, p2p_network)
     da_node = plan.add_service(
         name=da_node_service_name,
         config=ServiceConfig(
@@ -44,6 +62,7 @@ def run(
             env_vars={
                 "NODE_TYPE": node_type,
                 "P2P_NETWORK": p2p_network,
+                "NODE_STORE": node_store,
             },
             # Set the command to start the node
             cmd=[
@@ -54,7 +73,15 @@ def run(
                 core_ip,
                 "--p2p.network",
                 p2p_network,
+                "--node.store",
+                node_store,
             ],
+            files={
+                # mount the init data at filepath
+                node_store: init_data,
+            },
+            # Set the user, required for permissions to create directories
+            user=User(uid=0),
         ),
     )
 
